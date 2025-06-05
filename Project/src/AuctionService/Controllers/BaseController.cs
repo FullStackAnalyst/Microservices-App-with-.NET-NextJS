@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace Server.Controllers;
+namespace AuctionService.Controllers;
 [Route("api/[controller]")]
 [ApiController]
 public class BaseController : ControllerBase
