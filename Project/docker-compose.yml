@@ -1,0 +1,27 @@
+services:
+  auctionservice:
+    build:
+      context: .
+      dockerfile: src/AuctionService/Dockerfile
+    environment:
+      - ConnectionStrings__DCS=Host=postgres;Port=5432;Database=AuctionDB;Username=postgres;Password=1A2B3C
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+
+  postgres:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1A2B3C
+      POSTGRES_DB: AuctionDB
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
