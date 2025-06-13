@@ -17,28 +17,28 @@ public class AuctionController(AuctionDataContext context) : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<AuctionDto>>> GetAuctions()
     {
-        List<AuctionDto> auctions = await (from a in _context.Auctions
-                                           join i in _context.Items
-                                           on a.Id equals i.AuctionId
-                                           select new AuctionDto
-                                           {
-                                               Id = a.Id,
-                                               CreatedAt = a.CreatedAt,
-                                               UpdatedAt = a.UpdatedAt,
-                                               AuctionEnd = a.AuctionEnd,
-                                               Seller = a.Seller,
-                                               Winner = a.Winner,
-                                               Status = a.Status.ToString(),
-                                               ReservePrice = a.ReservePrice,
-                                               SoldAmount = a.SoldAmount,
-                                               CurrentHighBid = a.CurrentHighBid,
-                                               Make = i.Make,
-                                               Model = i.Model,
-                                               Year = i.Year,
-                                               Color = i.Color,
-                                               Mileage = i.Mileage,
-                                               ImageURL = i.ImageURL
-                                           })
+        var auctions = await (from a in _context.Auctions
+                              join i in _context.Items
+                              on a.Id equals i.AuctionId
+                              select new AuctionDto
+                              {
+                                  Id = a.Id,
+                                  CreatedAt = a.CreatedAt,
+                                  UpdatedAt = a.UpdatedAt,
+                                  AuctionEnd = a.AuctionEnd,
+                                  Seller = a.Seller,
+                                  Winner = a.Winner,
+                                  Status = a.Status.ToString(),
+                                  ReservePrice = a.ReservePrice,
+                                  SoldAmount = a.SoldAmount,
+                                  CurrentHighBid = a.CurrentHighBid,
+                                  Make = i.Make,
+                                  Model = i.Model,
+                                  Year = i.Year,
+                                  Color = i.Color,
+                                  Mileage = i.Mileage,
+                                  ImageURL = i.ImageURL
+                              })
                                            .AsNoTracking()
                                            .ToListAsync();
 
@@ -49,28 +49,28 @@ public class AuctionController(AuctionDataContext context) : ControllerBase
     [HttpGet]
     public async Task<ActionResult<AuctionDto>> GetAuction(Guid auctionId)
     {
-        AuctionDto? auction = await (from a in _context.Auctions
-                                     join i in _context.Items on a.Id equals i.AuctionId
-                                     where a.Id == auctionId
-                                     select new AuctionDto
-                                     {
-                                         Id = a.Id,
-                                         CreatedAt = a.CreatedAt,
-                                         UpdatedAt = a.UpdatedAt,
-                                         AuctionEnd = a.AuctionEnd,
-                                         Seller = a.Seller,
-                                         Winner = a.Winner,
-                                         Status = a.Status.ToString(),
-                                         ReservePrice = a.ReservePrice,
-                                         SoldAmount = a.SoldAmount,
-                                         CurrentHighBid = a.CurrentHighBid,
-                                         Make = i.Make,
-                                         Model = i.Model,
-                                         Year = i.Year,
-                                         Color = i.Color,
-                                         Mileage = i.Mileage,
-                                         ImageURL = i.ImageURL
-                                     })
+        var auction = await (from a in _context.Auctions
+                             join i in _context.Items on a.Id equals i.AuctionId
+                             where a.Id == auctionId
+                             select new AuctionDto
+                             {
+                                 Id = a.Id,
+                                 CreatedAt = a.CreatedAt,
+                                 UpdatedAt = a.UpdatedAt,
+                                 AuctionEnd = a.AuctionEnd,
+                                 Seller = a.Seller,
+                                 Winner = a.Winner,
+                                 Status = a.Status.ToString(),
+                                 ReservePrice = a.ReservePrice,
+                                 SoldAmount = a.SoldAmount,
+                                 CurrentHighBid = a.CurrentHighBid,
+                                 Make = i.Make,
+                                 Model = i.Model,
+                                 Year = i.Year,
+                                 Color = i.Color,
+                                 Mileage = i.Mileage,
+                                 ImageURL = i.ImageURL
+                             })
                                      .AsNoTracking()
                                      .FirstOrDefaultAsync();
 
@@ -85,9 +85,9 @@ public class AuctionController(AuctionDataContext context) : ControllerBase
             return BadRequest(ModelState);
         }
 
-        string sellerUsername = User?.Identity?.Name ?? "unknown";
+        var sellerUsername = User?.Identity?.Name ?? "unknown";
 
-        Auction auction = new()
+        var auction = new Auction
         {
             Id = Guid.NewGuid(),
             Seller = sellerUsername,
@@ -112,7 +112,7 @@ public class AuctionController(AuctionDataContext context) : ControllerBase
         _ = await _context.Auctions.AddAsync(auction);
         _ = await _context.SaveChangesAsync();
 
-        AuctionDto auctionDto = new()
+        var auctionDto = new AuctionDto
         {
             Id = auction.Id,
             CreatedAt = auction.CreatedAt,
@@ -153,11 +153,11 @@ public class AuctionController(AuctionDataContext context) : ControllerBase
             return NotFound();
         }
 
-        Auction auction = new() { Id = result.AuctionId };
+        var auction = new Auction { Id = result.AuctionId };
         _ = _context.Attach(auction);
         auction.UpdatedAt = DateTime.UtcNow;
 
-        Item item = new() { Id = result.ItemId };
+        var item = new Item { Id = result.ItemId };
         _ = _context.Attach(item);
 
         if (!string.IsNullOrWhiteSpace(updateAuctionDto.Make))
@@ -193,7 +193,7 @@ public class AuctionController(AuctionDataContext context) : ControllerBase
     [HttpDelete]
     public async Task<IActionResult> DeleteAuction(Guid auctionId)
     {
-        int deletedCount = await _context.Auctions
+        var deletedCount = await _context.Auctions
             .Where(a => a.Id == auctionId)
             .ExecuteDeleteAsync();
 

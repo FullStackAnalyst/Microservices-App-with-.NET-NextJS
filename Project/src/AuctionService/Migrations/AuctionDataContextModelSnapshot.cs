@@ -17,7 +17,7 @@ namespace AuctionService.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.5")
+.HasAnnotation("ProductVersion", "9.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -336,11 +336,8 @@ namespace AuctionService.Migrations
                     b.Navigation("Auction");
                 });
 
-            modelBuilder.Entity("AuctionService.Entities.Models.Auction", b =>
-                {
-                    b.Navigation("Item")
-                        .IsRequired();
-                });
+            modelBuilder.Entity("AuctionService.Entities.Models.Auction", b => b.Navigation("Item")
+                        .IsRequired());
 #pragma warning restore 612, 618
         }
     }
