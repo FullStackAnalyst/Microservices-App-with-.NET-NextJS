@@ -10,7 +10,19 @@ builder.Services.AddDbContext<AuctionDataContext>(options =>
 
 builder.Services.AddControllers();
 
-builder.Services.AddMassTransit(options => options.UsingRabbitMq((ctx, cfg) => cfg.ConfigureEndpoints(ctx)));
+builder.Services.AddMassTransit(o =>
+{
+    o.AddEntityFrameworkOutbox<AuctionDataContext>(o =>
+    {
+        o.QueryDelay = TimeSpan.FromSeconds(10);
+
+        _ = o.UsePostgres();
+
+        o.UseBusOutbox();
+    });
+
+    o.UsingRabbitMq((ctx, cfg) => cfg.ConfigureEndpoints(ctx));
+});
 
 var app = builder.Build();
 

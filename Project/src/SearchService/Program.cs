@@ -14,13 +14,13 @@ builder.Services.AddControllers();
 builder.Services.AddHttpClient<AuctionSyncClient>()
     .AddPolicyHandler(ApplyRetryPolicy());
 
-builder.Services.AddMassTransit(options =>
+builder.Services.AddMassTransit(o =>
 {
-    options.AddConsumersFromNamespaceContaining<AuctionCreatedConsumer>();
+    o.AddConsumersFromNamespaceContaining<AuctionCreatedConsumer>();
 
-    options.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("search", false));
+    o.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("search", false));
 
-    options.UsingRabbitMq((context, cfg) =>
+    o.UsingRabbitMq((context, cfg) =>
     {
         cfg.Host("localhost", "/", _ => { });
         cfg.ConfigureEndpoints(context);

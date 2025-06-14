@@ -1,5 +1,6 @@
 ﻿using AuctionService.Entities.Enums;
 using AuctionService.Entities.Models;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
@@ -19,6 +20,10 @@ public class AuctionDataContext(DbContextOptions<AuctionDataContext> options) : 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.AddInboxStateEntity();
+        modelBuilder.AddOutboxMessageEntity();
+        modelBuilder.AddOutboxStateEntity();
 
         _ = modelBuilder.Entity<Auction>()
             .HasOne(a => a.Item)

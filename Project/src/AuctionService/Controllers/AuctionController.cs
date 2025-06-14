@@ -118,12 +118,6 @@ public class AuctionController(AuctionDataContext context, IPublishEndpoint publ
 
         _ = await _context.Auctions.AddAsync(auction);
 
-        var saveResult = await _context.SaveChangesAsync() > 0;
-        if (!saveResult)
-        {
-            return BadRequest("Failed to create auction");
-        }
-
         var auctionDto = new AuctionDto
         {
             Id = auction.Id,
@@ -158,7 +152,11 @@ public class AuctionController(AuctionDataContext context, IPublishEndpoint publ
             AuctionEnd = auctionDto.AuctionEnd
         });
 
-        return CreatedAtAction(nameof(GetAuction), new { auctionId = auction.Id }, auctionDto);
+        var saveResult = await _context.SaveChangesAsync() > 0;
+
+        return !saveResult
+            ? BadRequest("Failed to create auction")
+            : CreatedAtAction(nameof(GetAuction), new { auctionId = auction.Id }, auctionDto);
     }
 
     [Route("update")]
