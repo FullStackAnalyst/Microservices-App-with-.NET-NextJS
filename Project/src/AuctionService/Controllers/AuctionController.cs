@@ -15,34 +15,40 @@ public class AuctionController(AuctionDataContext context) : ControllerBase
 
     [Route("auctions")]
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<AuctionDto>>> GetAuctions()
+    public async Task<ActionResult<List<AuctionDto>>> GetAuctions(string? date)
     {
-        var auctions = await (from a in _context.Auctions
-                              join i in _context.Items
-                              on a.Id equals i.AuctionId
-                              select new AuctionDto
-                              {
-                                  Id = a.Id,
-                                  CreatedAt = a.CreatedAt,
-                                  UpdatedAt = a.UpdatedAt,
-                                  AuctionEnd = a.AuctionEnd,
-                                  Seller = a.Seller,
-                                  Winner = a.Winner,
-                                  Status = a.Status.ToString(),
-                                  ReservePrice = a.ReservePrice,
-                                  SoldAmount = a.SoldAmount,
-                                  CurrentHighBid = a.CurrentHighBid,
-                                  Make = i.Make,
-                                  Model = i.Model,
-                                  Year = i.Year,
-                                  Color = i.Color,
-                                  Mileage = i.Mileage,
-                                  ImageURL = i.ImageURL
-                              })
-                                           .AsNoTracking()
-                                           .ToListAsync();
+        DateTime parsedDate = default;
+        var hasValidDate = !string.IsNullOrWhiteSpace(date) && DateTime.TryParse(date, out parsedDate);
+        var parsedUtcDate = hasValidDate ? parsedDate.ToUniversalTime() : DateTime.MinValue;
 
-        return Ok(auctions);
+        var query =
+            from auction in _context.Auctions.AsNoTracking()
+            join item in _context.Items.AsNoTracking() on auction.Id equals item.AuctionId
+            where !hasValidDate || auction.UpdatedAt > parsedUtcDate
+            orderby item.Make
+            select new AuctionDto
+            {
+                Id = auction.Id,
+                CreatedAt = auction.CreatedAt,
+                UpdatedAt = auction.UpdatedAt,
+                AuctionEnd = auction.AuctionEnd,
+                Seller = auction.Seller,
+                Winner = auction.Winner,
+                Status = auction.Status.ToString(),
+                ReservePrice = auction.ReservePrice,
+                SoldAmount = auction.SoldAmount,
+                CurrentHighBid = auction.CurrentHighBid,
+                Make = item.Make,
+                Model = item.Model,
+                Year = item.Year,
+                Color = item.Color,
+                Mileage = item.Mileage,
+                ImageURL = item.ImageURL
+            };
+
+        var result = await query.ToListAsync();
+
+        return result.Count > 0 ? Ok(result) : NotFound();
     }
 
     [Route("auction")]

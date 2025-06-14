@@ -38,6 +38,7 @@ public class SearchController : ControllerBase
         }
 
         var currentTime = DateTime.UtcNow;
+
         if (!string.IsNullOrWhiteSpace(request.FilterBy))
         {
             filters.Add(request.FilterBy.ToLower() switch
