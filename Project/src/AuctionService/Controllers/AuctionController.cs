@@ -2,6 +2,8 @@
 using AuctionService.Entities.DTOs;
 using AuctionService.Entities.Enums;
 using AuctionService.Entities.Models;
+using Contracts.Events;
+using MassTransit;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,22 +11,27 @@ namespace AuctionService.Controllers;
 
 [Route("[controller]")]
 [ApiController]
-public class AuctionController(AuctionDataContext context) : ControllerBase
+public class AuctionController(AuctionDataContext context, IPublishEndpoint publish) : ControllerBase
 {
     private readonly AuctionDataContext _context = context;
+    private readonly IPublishEndpoint _publish = publish;
 
     [Route("auctions")]
     [HttpGet]
     public async Task<ActionResult<List<AuctionDto>>> GetAuctions(string? date)
     {
-        DateTime parsedDate = default;
-        var hasValidDate = !string.IsNullOrWhiteSpace(date) && DateTime.TryParse(date, out parsedDate);
-        var parsedUtcDate = hasValidDate ? parsedDate.ToUniversalTime() : DateTime.MinValue;
+        var parsedDate = DateTime.MinValue;
+
+        if (!string.IsNullOrWhiteSpace(date) && DateTime.TryParse(date, out var tempDate))
+        {
+            parsedDate = tempDate.ToUniversalTime();
+        }
 
         var query =
             from auction in _context.Auctions.AsNoTracking()
-            join item in _context.Items.AsNoTracking() on auction.Id equals item.AuctionId
-            where !hasValidDate || auction.UpdatedAt > parsedUtcDate
+            join item in _context.Items.AsNoTracking()
+                on auction.Id equals item.AuctionId
+            where auction.UpdatedAt > parsedDate
             orderby item.Make
             select new AuctionDto
             {
@@ -83,40 +90,39 @@ public class AuctionController(AuctionDataContext context) : ControllerBase
         return auction == null ? NotFound() : Ok(auction);
     }
 
-    [HttpPost("add")]
-    public async Task<ActionResult<AuctionDto>> PostAuction(CreateAuctionDto createAuctionDto)
+    [Route("add")]
+    [HttpPost]
+    public async Task<ActionResult<AuctionDto>> CreateAuction([FromBody] CreateAuctionDto createAuctionDto)
     {
-        if (!ModelState.IsValid)
+        var item = new Item
         {
-            return BadRequest(ModelState);
-        }
-
-        var sellerUsername = User?.Identity?.Name ?? "unknown";
+            Make = createAuctionDto.Make,
+            Model = createAuctionDto.Model,
+            Year = createAuctionDto.Year,
+            Color = createAuctionDto.Color,
+            Mileage = createAuctionDto.Mileage,
+            ImageURL = createAuctionDto.ImageUrl
+        };
 
         var auction = new Auction
         {
             Id = Guid.NewGuid(),
-            Seller = sellerUsername,
+            Seller = "Test",
             ReservePrice = createAuctionDto.ReservePrice,
             AuctionEnd = createAuctionDto.AuctionEnd,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
             Status = Status.Live,
-            Item = new Item
-            {
-                Id = Guid.NewGuid(),
-                Make = createAuctionDto.Make,
-                Model = createAuctionDto.Model,
-                Year = createAuctionDto.Year,
-                Color = createAuctionDto.Color,
-                Mileage = createAuctionDto.Mileage,
-                ImageURL = createAuctionDto.ImageUrl,
-                AuctionId = Guid.Empty
-            }
+            Item = item
         };
 
         _ = await _context.Auctions.AddAsync(auction);
-        _ = await _context.SaveChangesAsync();
+
+        var saveResult = await _context.SaveChangesAsync() > 0;
+        if (!saveResult)
+        {
+            return BadRequest("Failed to create auction");
+        }
 
         var auctionDto = new AuctionDto
         {
@@ -126,17 +132,31 @@ public class AuctionController(AuctionDataContext context) : ControllerBase
             AuctionEnd = auction.AuctionEnd,
             Seller = auction.Seller,
             Winner = auction.Winner,
-            Make = auction.Item.Make,
-            Model = auction.Item.Model,
-            Year = auction.Item.Year,
-            Color = auction.Item.Color,
-            Mileage = auction.Item.Mileage,
-            ImageURL = auction.Item.ImageURL,
+            Make = item.Make,
+            Model = item.Model,
+            Year = item.Year,
+            Color = item.Color,
+            Mileage = item.Mileage,
+            ImageURL = item.ImageURL,
             Status = auction.Status.ToString(),
             ReservePrice = auction.ReservePrice,
             SoldAmount = auction.SoldAmount,
             CurrentHighBid = auction.CurrentHighBid
         };
+
+        await _publish.Publish(new AuctionCreated
+        {
+            Id = auctionDto.Id,
+            Seller = auctionDto.Seller,
+            Make = auctionDto.Make,
+            Model = auctionDto.Model,
+            Year = auctionDto.Year,
+            Color = auctionDto.Color,
+            Mileage = auctionDto.Mileage,
+            ImageURL = auctionDto.ImageURL,
+            ReservePrice = auctionDto.ReservePrice,
+            AuctionEnd = auctionDto.AuctionEnd
+        });
 
         return CreatedAtAction(nameof(GetAuction), new { auctionId = auction.Id }, auctionDto);
     }

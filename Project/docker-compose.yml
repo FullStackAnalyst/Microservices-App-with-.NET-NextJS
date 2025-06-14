@@ -25,6 +25,7 @@ services:
 
   mongodb:
     image: mongo:latest
+    restart: always
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongoroot
       - MONGO_INITDB_ROOT_PASSWORD=mongopw
@@ -32,6 +33,16 @@ services:
       - "27018:27017"
     volumes:
       - mongo_data:/data/db
+
+  rabbitmq:
+    image: rabbitmq:latest
+    restart: always
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    ports:
+      - "15672:15672" # Management UI
+      - "5672:5672" # AMQP protocol port
 
 volumes:
   postgres_data:

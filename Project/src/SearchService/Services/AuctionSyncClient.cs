@@ -22,31 +22,25 @@ public class AuctionSyncClient(HttpClient client, IConfiguration config)
             return [];
         }
 
-        var requestUrl = $"{auctionServiceUrl}/auction/auctions?date={lastUpdated}";
+        Console.WriteLine($"Requesting auction data from: {auctionServiceUrl}/auction/auctions?date={lastUpdated}");
 
         try
         {
-            var response = await _client.GetAsync(requestUrl);
+            var response = await _client.GetAsync($"{auctionServiceUrl}/auction/auctions?date={lastUpdated}");
 
-            if (response.IsSuccessStatusCode)
-            {
-                var items = await response.Content.ReadFromJsonAsync<List<Item>>();
-                return items ?? [];
-            }
-            else
+            if (!response.IsSuccessStatusCode)
             {
                 Console.WriteLine($"AuctionService returned status {(int)response.StatusCode}: {response.ReasonPhrase}");
                 return [];
             }
-        }
-        catch (HttpRequestException ex)
-        {
-            Console.WriteLine($"HTTP request failed: {ex.Message}");
-            return [];
+
+            var items = await response.Content.ReadFromJsonAsync<List<Item>>();
+
+            return items ?? [];
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Unexpected error: {ex.Message}");
+            Console.WriteLine($"Error fetching auction listings: {ex.Message}");
             return [];
         }
     }

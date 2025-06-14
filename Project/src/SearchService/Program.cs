@@ -1,5 +1,7 @@
+﻿using MassTransit;
 using Polly;
 using Polly.Extensions.Http;
+using SearchService.Consumers;
 using SearchService.Data;
 using SearchService.Services;
 using System.Net;
@@ -7,15 +9,25 @@ using System.Net;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
 
 builder.Services.AddHttpClient<AuctionSyncClient>()
     .AddPolicyHandler(ApplyRetryPolicy());
 
-var app = builder.Build();
+builder.Services.AddMassTransit(options =>
+{
+    options.AddConsumersFromNamespaceContaining<AuctionCreatedConsumer>();
 
-// Configure the HTTP request pipeline.
+    options.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("search", false));
+
+    options.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host("localhost", "/", _ => { });
+        cfg.ConfigureEndpoints(context);
+    });
+});
+
+var app = builder.Build();
 
 app.UseHttpsRedirection();
 
@@ -23,17 +35,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Lifetime.ApplicationStarted.Register(async () =>
-{
-    try
-    {
-        await Initializer.ConfigureDatabase(app);
-    }
-    catch (Exception e)
-    {
-        Console.WriteLine(e);
-    }
-});
+await Initializer.ConfigureDatabase(app);
 
 await app.RunAsync();
 
