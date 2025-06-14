@@ -184,43 +184,74 @@ public class AuctionController(AuctionDataContext context, IPublishEndpoint publ
         var item = new Item { Id = result.ItemId };
         _ = _context.Attach(item);
 
+        var hasUpdate = false;
+
         if (!string.IsNullOrWhiteSpace(updateAuctionDto.Make))
         {
             item.Make = updateAuctionDto.Make;
+            hasUpdate = true;
         }
 
         if (!string.IsNullOrWhiteSpace(updateAuctionDto.Model))
         {
             item.Model = updateAuctionDto.Model;
+            hasUpdate = true;
         }
 
         if (!string.IsNullOrWhiteSpace(updateAuctionDto.Color))
         {
             item.Color = updateAuctionDto.Color;
+            hasUpdate = true;
         }
 
         if (updateAuctionDto.Year.HasValue)
         {
             item.Year = updateAuctionDto.Year.Value;
+            hasUpdate = true;
         }
 
         if (updateAuctionDto.Mileage.HasValue)
         {
             item.Mileage = updateAuctionDto.Mileage.Value;
+            hasUpdate = true;
         }
 
-        _ = await _context.SaveChangesAsync();
-        return NoContent();
+        if (hasUpdate)
+        {
+            var auctionUpdated = new AuctionUpdated
+            {
+                Id = auction.Id.ToString(),
+                Make = item.Make,
+                Model = item.Model,
+                Year = item.Year,
+                Color = item.Color,
+                Mileage = item.Mileage,
+            };
+
+            await _publish.Publish(auctionUpdated);
+        }
+
+        var saveResult = await _context.SaveChangesAsync() > 0;
+
+        return !saveResult ? BadRequest("Failed to update auction") : NoContent();
     }
 
     [Route("delete")]
     [HttpDelete]
     public async Task<IActionResult> DeleteAuction(Guid auctionId)
     {
-        var deletedCount = await _context.Auctions
-            .Where(a => a.Id == auctionId)
-            .ExecuteDeleteAsync();
+        var auction = await _context.Auctions.FindAsync(auctionId);
+        if (auction == null)
+        {
+            return NotFound();
+        }
 
-        return deletedCount == 0 ? NotFound() : NoContent();
+        _ = _context.Auctions.Remove(auction);
+
+        await _publish.Publish(new AuctionDeleted { Id = auction.Id.ToString() });
+
+        var result = await _context.SaveChangesAsync() > 0;
+
+        return !result ? BadRequest("Failed to delete auction") : NoContent();
     }
 }
