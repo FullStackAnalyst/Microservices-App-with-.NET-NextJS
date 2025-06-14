@@ -14,10 +14,12 @@ public class AuctionCreatedConsumer : IConsumer<AuctionCreated>
 
         var item = new Item
         {
+            ID = message.Id.ToString(),
             CreatedAt = message.CreatedAt,
             UpdatedAt = message.UpdatedAt,
             AuctionEnd = message.AuctionEnd,
             Seller = message.Seller,
+            Winner = message.Winner,
             Make = message.Make,
             Model = message.Model,
             Year = message.Year,

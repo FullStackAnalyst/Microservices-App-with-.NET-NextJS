@@ -142,6 +142,7 @@ public class AuctionController(AuctionDataContext context, IPublishEndpoint publ
         {
             Id = auctionDto.Id,
             Seller = auctionDto.Seller,
+            Winner = auctionDto.Winner,
             Make = auctionDto.Make,
             Model = auctionDto.Model,
             Year = auctionDto.Year,
@@ -149,7 +150,12 @@ public class AuctionController(AuctionDataContext context, IPublishEndpoint publ
             Mileage = auctionDto.Mileage,
             ImageURL = auctionDto.ImageURL,
             ReservePrice = auctionDto.ReservePrice,
-            AuctionEnd = auctionDto.AuctionEnd
+            AuctionEnd = auctionDto.AuctionEnd,
+            CreatedAt = auctionDto.CreatedAt,
+            UpdatedAt = auctionDto.UpdatedAt,
+            Status = auctionDto.Status,
+            SoldAmount = auctionDto.SoldAmount ?? 0,
+            CurrentHighBid = auctionDto.CurrentHighBid ?? 0
         });
 
         var saveResult = await _context.SaveChangesAsync() > 0;
