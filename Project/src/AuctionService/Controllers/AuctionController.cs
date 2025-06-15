@@ -247,6 +247,7 @@ public class AuctionController(AuctionDataContext context, IPublishEndpoint publ
     public async Task<IActionResult> DeleteAuction(Guid auctionId)
     {
         var auction = await _context.Auctions.FindAsync(auctionId);
+
         if (auction == null)
         {
             return NotFound();
