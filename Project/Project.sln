@@ -44,7 +44,7 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {DDE40332-A77A-4DD0-A8D7-A03A0B5AFC9D}
 		FileExplorer = src\
+		SolutionGuid = {DDE40332-A77A-4DD0-A8D7-A03A0B5AFC9D}
 	EndGlobalSection
 EndGlobal
