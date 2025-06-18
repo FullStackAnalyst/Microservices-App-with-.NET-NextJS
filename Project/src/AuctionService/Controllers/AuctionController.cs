@@ -4,13 +4,14 @@ using AuctionService.Entities.Enums;
 using AuctionService.Entities.Models;
 using Contracts.Events;
 using MassTransit;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace AuctionService.Controllers;
 
-[Route("[controller]")]
 [ApiController]
+[Route("[controller]")]
 public class AuctionController(AuctionDataContext context, IPublishEndpoint publish) : ControllerBase
 {
     private readonly AuctionDataContext _context = context;
@@ -18,10 +19,9 @@ public class AuctionController(AuctionDataContext context, IPublishEndpoint publ
 
     [Route("auctions")]
     [HttpGet]
-    public async Task<ActionResult<List<AuctionDto>>> GetAuctions(string? date)
+    public async Task<ActionResult<List<AuctionDto>>> GetAuctions([FromQuery] string? date)
     {
         var parsedDate = DateTime.MinValue;
-
         if (!string.IsNullOrWhiteSpace(date) && DateTime.TryParse(date, out var tempDate))
         {
             parsedDate = tempDate.ToUniversalTime();
@@ -62,54 +62,62 @@ public class AuctionController(AuctionDataContext context, IPublishEndpoint publ
     [HttpGet]
     public async Task<ActionResult<AuctionDto>> GetAuction(Guid auctionId)
     {
-        var auction = await (from a in _context.Auctions
-                             join i in _context.Items on a.Id equals i.AuctionId
-                             where a.Id == auctionId
-                             select new AuctionDto
-                             {
-                                 Id = a.Id,
-                                 CreatedAt = a.CreatedAt,
-                                 UpdatedAt = a.UpdatedAt,
-                                 AuctionEnd = a.AuctionEnd,
-                                 Seller = a.Seller,
-                                 Winner = a.Winner,
-                                 Status = a.Status.ToString(),
-                                 ReservePrice = a.ReservePrice,
-                                 SoldAmount = a.SoldAmount,
-                                 CurrentHighBid = a.CurrentHighBid,
-                                 Make = i.Make,
-                                 Model = i.Model,
-                                 Year = i.Year,
-                                 Color = i.Color,
-                                 Mileage = i.Mileage,
-                                 ImageURL = i.ImageURL
-                             })
-                                     .AsNoTracking()
-                                     .FirstOrDefaultAsync();
+        var auction = await (
+            from a in _context.Auctions
+            join i in _context.Items on a.Id equals i.AuctionId
+            where a.Id == auctionId
+            select new AuctionDto
+            {
+                Id = a.Id,
+                CreatedAt = a.CreatedAt,
+                UpdatedAt = a.UpdatedAt,
+                AuctionEnd = a.AuctionEnd,
+                Seller = a.Seller,
+                Winner = a.Winner,
+                Status = a.Status.ToString(),
+                ReservePrice = a.ReservePrice,
+                SoldAmount = a.SoldAmount,
+                CurrentHighBid = a.CurrentHighBid,
+                Make = i.Make,
+                Model = i.Model,
+                Year = i.Year,
+                Color = i.Color,
+                Mileage = i.Mileage,
+                ImageURL = i.ImageURL
+            })
+            .AsNoTracking()
+            .FirstOrDefaultAsync();
 
         return auction == null ? NotFound() : Ok(auction);
     }
 
+    [Authorize]
     [Route("add")]
     [HttpPost]
-    public async Task<ActionResult<AuctionDto>> CreateAuction([FromBody] CreateAuctionDto createAuctionDto)
+    public async Task<ActionResult<AuctionDto>> CreateAuction([FromBody] CreateAuctionDto dto)
     {
+        var sellerName = User?.Identity?.Name;
+        if (string.IsNullOrWhiteSpace(sellerName))
+        {
+            return BadRequest("Seller information is missing.");
+        }
+
         var item = new Item
         {
-            Make = createAuctionDto.Make,
-            Model = createAuctionDto.Model,
-            Year = createAuctionDto.Year,
-            Color = createAuctionDto.Color,
-            Mileage = createAuctionDto.Mileage,
-            ImageURL = createAuctionDto.ImageUrl
+            Make = dto.Make,
+            Model = dto.Model,
+            Year = dto.Year,
+            Color = dto.Color,
+            Mileage = dto.Mileage,
+            ImageURL = dto.ImageUrl
         };
 
         var auction = new Auction
         {
             Id = Guid.NewGuid(),
-            Seller = "Test",
-            ReservePrice = createAuctionDto.ReservePrice,
-            AuctionEnd = createAuctionDto.AuctionEnd,
+            Seller = sellerName.Trim(),
+            ReservePrice = dto.ReservePrice,
+            AuctionEnd = dto.AuctionEnd,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
             Status = Status.Live,
@@ -142,7 +150,7 @@ public class AuctionController(AuctionDataContext context, IPublishEndpoint publ
         {
             Id = auctionDto.Id,
             Seller = auctionDto.Seller,
-            Winner = auctionDto.Winner,
+            Winner = auctionDto.Winner ?? string.Empty,
             Make = auctionDto.Make,
             Model = auctionDto.Model,
             Year = auctionDto.Year,
@@ -165,83 +173,108 @@ public class AuctionController(AuctionDataContext context, IPublishEndpoint publ
             : CreatedAtAction(nameof(GetAuction), new { auctionId = auction.Id }, auctionDto);
     }
 
+    [Authorize]
     [Route("update")]
     [HttpPut]
-    public async Task<IActionResult> PutAuction(Guid auctionId, UpdateAuctionDto updateAuctionDto)
+    public async Task<IActionResult> PutAuction(Guid auctionId, [FromBody] UpdateAuctionDto dto)
     {
-        var result = await _context.Auctions
-            .Where(a => a.Id == auctionId)
-            .Select(a => new
+        var sellerName = User?.Identity?.Name;
+
+        if (string.IsNullOrWhiteSpace(sellerName))
+        {
+            return Unauthorized("User identity is missing.");
+        }
+
+        var result = await (
+            from a in _context.Auctions
+            join i in _context.Items on a.Id equals i.AuctionId
+            where a.Id == auctionId
+            select new
             {
                 AuctionId = a.Id,
-                ItemId = a.Item.Id
-            })
-            .FirstOrDefaultAsync();
+                a.Seller,
+                ItemId = i.Id,
+                i.Make,
+                i.Model,
+                i.Color,
+                i.Year,
+                i.Mileage
+            }
+        ).FirstOrDefaultAsync();
 
-        if (result == null)
+        if (result is null)
         {
             return NotFound();
         }
 
-        var auction = new Auction { Id = result.AuctionId };
-        _ = _context.Attach(auction);
-        auction.UpdatedAt = DateTime.UtcNow;
+        if (!string.Equals(result.Seller?.Trim(), sellerName.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest("You are not authorized to update this auction.");
+        }
 
         var item = new Item { Id = result.ItemId };
-        _ = _context.Attach(item);
-
+        var entry = _context.Attach(item);
         var hasUpdate = false;
 
-        if (!string.IsNullOrWhiteSpace(updateAuctionDto.Make))
+        if (!string.IsNullOrWhiteSpace(dto.Make) && dto.Make != result.Make)
         {
-            item.Make = updateAuctionDto.Make;
+            item.Make = dto.Make;
+            entry.Property(x => x.Make).IsModified = true;
             hasUpdate = true;
         }
 
-        if (!string.IsNullOrWhiteSpace(updateAuctionDto.Model))
+        if (!string.IsNullOrWhiteSpace(dto.Model) && dto.Model != result.Model)
         {
-            item.Model = updateAuctionDto.Model;
+            item.Model = dto.Model;
+            entry.Property(x => x.Model).IsModified = true;
             hasUpdate = true;
         }
 
-        if (!string.IsNullOrWhiteSpace(updateAuctionDto.Color))
+        if (!string.IsNullOrWhiteSpace(dto.Color) && dto.Color != result.Color)
         {
-            item.Color = updateAuctionDto.Color;
+            item.Color = dto.Color;
+            entry.Property(x => x.Color).IsModified = true;
             hasUpdate = true;
         }
 
-        if (updateAuctionDto.Year.HasValue)
+        if (dto.Year.HasValue && dto.Year.Value != result.Year)
         {
-            item.Year = updateAuctionDto.Year.Value;
+            item.Year = dto.Year.Value;
+            entry.Property(x => x.Year).IsModified = true;
             hasUpdate = true;
         }
 
-        if (updateAuctionDto.Mileage.HasValue)
+        if (dto.Mileage.HasValue && dto.Mileage.Value != result.Mileage)
         {
-            item.Mileage = updateAuctionDto.Mileage.Value;
+            item.Mileage = dto.Mileage.Value;
+            entry.Property(x => x.Mileage).IsModified = true;
             hasUpdate = true;
         }
 
         if (hasUpdate)
         {
+            var auction = new Auction { Id = result.AuctionId };
+            _context.Attach(auction).Property(x => x.UpdatedAt).CurrentValue = DateTime.UtcNow;
+            _context.Entry(auction).Property(x => x.UpdatedAt).IsModified = true;
+
             var auctionUpdated = new AuctionUpdated
             {
-                Id = auction.Id.ToString(),
+                Id = result.AuctionId.ToString(),
                 Make = item.Make,
                 Model = item.Model,
                 Year = item.Year,
                 Color = item.Color,
-                Mileage = item.Mileage,
+                Mileage = item.Mileage
             };
 
             await _publish.Publish(auctionUpdated);
         }
 
-        var saveResult = await _context.SaveChangesAsync() > 0;
-
-        return !saveResult ? BadRequest("Failed to update auction") : NoContent();
+        var saved = await _context.SaveChangesAsync() > 0;
+        return !saved ? BadRequest("Failed to update auction.") : NoContent();
     }
 
+    [Authorize]
     [Route("delete")]
     [HttpDelete]
     public async Task<IActionResult> DeleteAuction(Guid auctionId)
@@ -251,6 +284,18 @@ public class AuctionController(AuctionDataContext context, IPublishEndpoint publ
         if (auction == null)
         {
             return NotFound();
+        }
+
+        var sellerName = User?.Identity?.Name;
+
+        if (string.IsNullOrWhiteSpace(sellerName))
+        {
+            return Unauthorized("User identity is missing.");
+        }
+
+        if (!string.Equals(auction.Seller?.Trim(), sellerName.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            return BadRequest("You are not authorized to delete this auction.");
         }
 
         _ = _context.Auctions.Remove(auction);

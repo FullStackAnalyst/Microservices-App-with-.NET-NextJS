@@ -1,10 +1,12 @@
-using IdentityService.Data;
+﻿using IdentityService.Data;
 using IdentityService.Models;
+using IdentityService.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 namespace IdentityService;
+
 internal static class HostingExtensions
 {
     public static WebApplication ConfigureServices(this WebApplicationBuilder builder)
@@ -18,21 +20,22 @@ internal static class HostingExtensions
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
 
-        _ = builder.Services
-            .AddIdentityServer(options =>
-            {
-                options.Events.RaiseErrorEvents = true;
-                options.Events.RaiseInformationEvents = true;
-                options.Events.RaiseFailureEvents = true;
-                options.Events.RaiseSuccessEvents = true;
-            })
+        _ = builder.Services.AddIdentityServer(options =>
+        {
+            options.Events.RaiseErrorEvents = true;
+            options.Events.RaiseInformationEvents = true;
+            options.Events.RaiseFailureEvents = true;
+            options.Events.RaiseSuccessEvents = true;
+        })
             .AddInMemoryIdentityResources(Config.IdentityResources)
             .AddInMemoryApiScopes(Config.ApiScopes)
             .AddInMemoryClients(Config.Clients)
             .AddAspNetIdentity<ApplicationUser>()
+            .AddProfileService<UserProfileService>()
+            .AddDeveloperSigningCredential(persistKey: true, filename: "idsrv4tempkey.rsa")
             .AddLicenseSummary();
 
-        _ = builder.Services.ConfigureApplicationCookie(o => o.Cookie.SameSite = SameSiteMode.Lax);
+        _ = builder.Services.ConfigureApplicationCookie(options => options.Cookie.SameSite = SameSiteMode.Lax);
 
         _ = builder.Services.AddAuthentication();
 
@@ -53,8 +56,7 @@ internal static class HostingExtensions
         _ = app.UseIdentityServer();
         _ = app.UseAuthorization();
 
-        _ = app.MapRazorPages()
-            .RequireAuthorization();
+        _ = app.MapRazorPages().RequireAuthorization();
 
         return app;
     }
