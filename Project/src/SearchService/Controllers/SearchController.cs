@@ -6,6 +6,7 @@ using SearchService.Entities.Models;
 using SearchService.Entities.Requests;
 
 namespace SearchService.Controllers;
+
 [Route("[controller]")]
 [ApiController]
 public class SearchController : ControllerBase

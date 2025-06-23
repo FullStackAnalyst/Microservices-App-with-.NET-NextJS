@@ -10,7 +10,7 @@ public static class Initializer
     public static async Task ConfigureDatabase(WebApplication app)
     {
         await DB.InitAsync("SearchDB", MongoClientSettings
-            .FromConnectionString(app.Configuration.GetConnectionString("MCS")));
+            .FromConnectionString(app.Configuration.GetConnectionString("SCS")));
 
         try
         {

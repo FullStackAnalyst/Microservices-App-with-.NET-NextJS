@@ -14,7 +14,7 @@ internal static class HostingExtensions
         _ = builder.Services.AddRazorPages();
 
         _ = builder.Services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseNpgsql(builder.Configuration.GetConnectionString("DCS")));
+            options.UseNpgsql(builder.Configuration.GetConnectionString("ICS")));
 
         _ = builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
             .AddEntityFrameworkStores<ApplicationDbContext>()
