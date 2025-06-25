@@ -1,19 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36202.13
+VisualStudioVersion = 17.14.36221.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuctionService", "src\AuctionService\AuctionService.csproj", "{CD4F1F0F-3AED-417A-A583-99C5C0650D39}"
-EndProject
-Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{81DDED9D-158B-E303-5F62-77A2896D2A5A}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SearchService", "src\SearchService\SearchService.csproj", "{7AB815BC-5561-48BF-AAF1-BA974FD7E6F4}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Contracts", "src\Contracts\Contracts.csproj", "{674187E0-D306-4B57-9455-476244CFFD88}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityService", "src\IdentityService\IdentityService.csproj", "{526DD860-F0BD-4008-A26D-FE7BEACA2C6B}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GatewayService", "src\GatewayService\GatewayService.csproj", "{B5697975-9D9A-4461-998E-48A923C6D3C1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Auction", "Server\Auction\Auction.csproj", "{C0635528-F970-444A-8F7F-95DCDBC83B30}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,36 +11,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{CD4F1F0F-3AED-417A-A583-99C5C0650D39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CD4F1F0F-3AED-417A-A583-99C5C0650D39}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{CD4F1F0F-3AED-417A-A583-99C5C0650D39}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{CD4F1F0F-3AED-417A-A583-99C5C0650D39}.Release|Any CPU.Build.0 = Release|Any CPU
-		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{81DDED9D-158B-E303-5F62-77A2896D2A5A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7AB815BC-5561-48BF-AAF1-BA974FD7E6F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7AB815BC-5561-48BF-AAF1-BA974FD7E6F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7AB815BC-5561-48BF-AAF1-BA974FD7E6F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7AB815BC-5561-48BF-AAF1-BA974FD7E6F4}.Release|Any CPU.Build.0 = Release|Any CPU
-		{674187E0-D306-4B57-9455-476244CFFD88}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{674187E0-D306-4B57-9455-476244CFFD88}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{674187E0-D306-4B57-9455-476244CFFD88}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{674187E0-D306-4B57-9455-476244CFFD88}.Release|Any CPU.Build.0 = Release|Any CPU
-		{526DD860-F0BD-4008-A26D-FE7BEACA2C6B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{526DD860-F0BD-4008-A26D-FE7BEACA2C6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{526DD860-F0BD-4008-A26D-FE7BEACA2C6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{526DD860-F0BD-4008-A26D-FE7BEACA2C6B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B5697975-9D9A-4461-998E-48A923C6D3C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B5697975-9D9A-4461-998E-48A923C6D3C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B5697975-9D9A-4461-998E-48A923C6D3C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B5697975-9D9A-4461-998E-48A923C6D3C1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0635528-F970-444A-8F7F-95DCDBC83B30}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0635528-F970-444A-8F7F-95DCDBC83B30}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0635528-F970-444A-8F7F-95DCDBC83B30}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0635528-F970-444A-8F7F-95DCDBC83B30}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {DDE40332-A77A-4DD0-A8D7-A03A0B5AFC9D}
-		FileExplorer = src\
+		SolutionGuid = {0047B863-184A-4519-8B6F-04935032E93B}
 	EndGlobalSection
 EndGlobal
